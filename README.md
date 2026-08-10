@@ -212,6 +212,9 @@ Denormalization
 Inverse VSTQ LUT
     │
     ▼
+Image Blending
+    │
+    ▼
 Restored image
 ```
 
