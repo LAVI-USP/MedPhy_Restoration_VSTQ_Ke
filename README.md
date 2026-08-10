@@ -80,7 +80,7 @@ The estimation procedure includes:
 6. Estimation of the structural noise parameter `ξₛ`;
 7. Estimation of the electronic noise parameter `ξₑ`.
 
-The estimated parameters are stored in the `NoiseParameters/Parameters/` directory and are subsequently used by the VSTQ transformation and image restoration procedures.
+The estimated parameters are stored in the `NoiseParameters/` directory and are subsequently used by the VSTQ transformation and image restoration procedures.
 
 ---
 
