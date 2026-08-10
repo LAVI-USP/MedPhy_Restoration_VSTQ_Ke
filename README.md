@@ -24,12 +24,7 @@ The framework implemented in this repository models the main noise contributions
 The complete workflow can be summarized as:
 
 ```text
-Calibration images
-       │
-       ▼
 Noise parameter estimation
-       │
-       ├───────────────► Spatial correlation kernel
        │
        ▼
 Quadratic noise model
