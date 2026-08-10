@@ -162,7 +162,7 @@ This approach avoids performing a computationally expensive numerical inversion 
 The LUT files are stored in:
 
 ```text
-NoiseParameters/LUT/
+NoiseParameters/LUT_IVSTQ.mat
 ```
 
 ### LUT Generation
@@ -170,7 +170,7 @@ NoiseParameters/LUT/
 The LUT estimation scripts are located in:
 
 ```text
-LUT_Estimation/
+est_LUT_IVSTQ.m
 ```
 
 The main parameters controlling the LUT generation include:
