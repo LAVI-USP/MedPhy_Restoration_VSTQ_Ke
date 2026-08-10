@@ -68,7 +68,7 @@ The quantum noise coefficient is allowed to vary spatially across the detector, 
 
 # 2. Noise Parameter Estimation
 
-The detector noise parameters are estimated from repeated homogeneous calibration images.
+The detector noise parameters used in this repository were estimated from repeated homogeneous calibration images. For further information on the estimation and analysis of detector noise parameters using uniform images, see the [CBEB 2026 Noise Estimation and Analysis repository](https://github.com/LAVI-USP/CBEB2026_Noise_Estimation_and_Analysis).
 
 The estimation procedure includes:
 
