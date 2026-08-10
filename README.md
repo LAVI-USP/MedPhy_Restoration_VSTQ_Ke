@@ -97,10 +97,10 @@ The corresponding noise power spectral density (PSD) can be obtained from the Fo
 The estimated kernel is stored in:
 
 ```text
-NoiseParameters/Kernel/
+NoiseParameters/Kernel_GE_Pristina.mat
 ```
 
-and is used to characterize the non-white noise present in the detector images.
+and is used to characterize the correlation of the noise present in the detector images.
 
 ---
 
