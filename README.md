@@ -221,7 +221,7 @@ Restored image
 The main demonstration script is:
 
 ```text
-Restoration/Demo_VSTQ_BM3D_Restoration.m
+Restoration_framework/Demo_VSTQ_BM3D_Restoration.m
 ```
 
 The demo performs the complete restoration pipeline using phantom images and previously estimated detector parameters.
@@ -306,51 +306,13 @@ HumanObserver/FinalTest/
 
 ---
 
-# 8. Repository Structure
-
-The repository is organized as follows:
-
-```text
-.
-├── BM3D_New/
-│   └── bm3d/
-│
-├── Functions/
-│   └── ...
-│
-├── LUT_Estimation/
-│   └── ...
-│
-├── NoiseParameters/
-│   ├── Parameters/
-│   ├── LUT/
-│   └── Kernel/
-│
-├── Restoration/
-│   ├── Demo_VSTQ_BM3D_Restoration.m
-│   └── ...
-│
-├── HumanObserver/
-│   ├── Pilot/
-│   │   └── ...
-│   └── FinalTest/
-│       └── ...
-│
-├── Phantom_images/
-│   └── ...
-│
-└── README.md
-```
-
----
-
-# 9. Requirements
+# 8. Requirements
 
 The code was developed and tested using MATLAB.
 
 Required components include:
 
-* MATLAB;
+* MATLAB 2025b;
 * Image Processing Toolbox;
 * DICOM image support.
 
@@ -360,56 +322,7 @@ The MATLAB version used for the final implementation will be specified in the co
 
 ---
 
-# 10. Usage
-
-The repository is organized into independent but connected stages.
-
-### Step 1 — Estimate noise parameters
-
-Use the scripts in:
-
-```text
-NoiseParameters/Parameters/
-```
-
-to estimate the detector-specific parameters from calibration images.
-
-### Step 2 — Estimate the spatial correlation
-
-Use the corresponding scripts to estimate the spatial correlation kernel and generate the detector noise PSD.
-
-### Step 3 — Generate the inverse VSTQ LUT
-
-Run the scripts in:
-
-```text
-LUT_Estimation/
-```
-
-to generate the inverse VSTQ lookup table.
-
-### Step 4 — Run image restoration
-
-Run:
-
-```text
-Restoration/Demo_VSTQ_BM3D_Restoration.m
-```
-
-to apply the complete restoration pipeline.
-
-### Step 5 — Run the human observer experiments
-
-The pilot and final human observer demonstrations will be added to:
-
-```text
-HumanObserver/Pilot/
-HumanObserver/FinalTest/
-```
-
----
-
-# 11. Detector-Specific Parameters
+# 9. Detector-Specific Parameters
 
 The provided restoration demonstration uses parameters estimated for a GE Senographe Pristina digital mammography system.
 
@@ -430,7 +343,7 @@ For application to another detector, the corresponding calibration data should b
 
 ---
 
-# 12. Data and Reproducibility
+# 10. Data and Reproducibility
 
 The repository is intended to provide reproducible implementations of the methods described in the associated research work.
 
@@ -442,7 +355,7 @@ Data that cannot be publicly redistributed will not be included in the repositor
 
 ---
 
-# 13. Applications
+# 11. Applications
 
 The methods implemented in this repository can be used for research involving:
 
@@ -462,7 +375,7 @@ The code is intended for research purposes and is not designed for clinical diag
 
 ---
 
-# 14. Citation
+# 12. Citation
 
 If you use this repository or the implemented methods in your research, please cite the associated publication:
 
@@ -472,7 +385,7 @@ If you use this repository or the implemented methods in your research, please c
 
 ---
 
-# 15. Contact
+# 13. Contact
 
 Renann F. Brandão
 Laboratory for Advanced Vision and Imaging (LAVI)
