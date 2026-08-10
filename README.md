@@ -1,102 +1,314 @@
 # Image Restoration in Digital Mammography Using VSTQ and Spatially Correlated Noise Modeling
 
-MATLAB implementation of an image restoration framework for digital mammography (DM) based on a quadratic noise model, the variance-stabilizing transform for quadratic noise (VSTQ), and BM3D denoising with spatially correlated noise information.
+MATLAB implementation of a framework for noise modeling, variance stabilization, image restoration, and human observer evaluation in digital mammography.
 
-This repository contains the implementation developed for research on noise modeling and image restoration in digital mammography, with particular emphasis on signal-dependent and spatially correlated detector noise.
+The repository contains the computational methods developed to investigate the effect of signal-dependent and spatially correlated noise on digital mammography images and to evaluate an image restoration approach based on the variance-stabilizing transform for quadratic noise (VSTQ) and BM3D.
+
+The repository includes tools for:
+
+* Quadratic noise model parameter estimation;
+* Spatial noise correlation characterization;
+* VSTQ transformation;
+* Inverse VSTQ lookup table (LUT) estimation;
+* Image restoration using VSTQ and BM3D;
+* Human observer experiments, including pilot and final tests.
 
 ---
 
 ## Overview
 
-Noise is an important factor affecting image quality and lesion detectability in digital mammography, particularly at reduced radiation dose.
+Noise is an important factor affecting image quality and lesion detectability in digital mammography, particularly at reduced radiation doses.
 
-The implemented restoration framework addresses the signal dependence and spatial correlation of detector noise by combining:
+The framework implemented in this repository models the main noise contributions in digital mammography using a quadratic noise model and explicitly accounts for spatial variations and spatial correlations in the detector noise.
 
-* A quadratic noise model;
-* A spatially varying quantum noise coefficient;
-* The variance-stabilizing transform for quadratic noise (VSTQ);
-* Noise correlation information estimated from calibration images;
-* BM3D denoising in the VSTQ domain;
-* An inverse VSTQ transformation for image reconstruction.
-
-The VSTQ transforms the signal-dependent noise into an approximately signal-independent representation, allowing conventional image denoising techniques to be applied more effectively.
-
-The complete processing pipeline is:
+The complete workflow can be summarized as:
 
 ```text
-Input mammography images
-        │
-        ▼
-Offset subtraction
-        │
-        ▼
-Forward VSTQ
-        │
-        ▼
-Noise stabilization
-        │
-        ▼
-BM3D denoising
-        │
-        ▼
-Inverse VSTQ
-        │
-        ▼
-Restored mammography image
+Calibration images
+       │
+       ▼
+Noise parameter estimation
+       │
+       ├───────────────► Spatial correlation kernel
+       │
+       ▼
+Quadratic noise model
+       │
+       ▼
+VSTQ / inverse VSTQ LUT estimation
+       │
+       ▼
+Mammography image restoration
+       │
+       ▼
+Human observer evaluation
 ```
 
 ---
 
-## Noise Model
+# 1. Noise Model
 
-The restoration framework is based on the quadratic noise model
+The restoration framework is based on a quadratic noise model:
 
 ```text
-Var[y] = ξₛ² y² + ξq(i,j) y + ξₑ²
+Var[y] = ξₛ² y² + ξq(i,j)y + ξₑ²
 ```
 
 where:
 
-* `y` is the offset-corrected detector signal;
-* `ξₛ` is the structural noise parameter;
+* `y` is the detector signal after offset subtraction;
+* `ξₛ` represents the structural noise component;
 * `ξq(i,j)` is the spatially varying quantum noise coefficient;
-* `ξₑ` is the electronic noise parameter.
+* `ξₑ` represents the electronic noise component.
 
-The spatially varying coefficient `ξq(i,j)` accounts for local variations in the detector response and is incorporated directly into the VSTQ transformation.
-
-The model therefore describes three main noise contributions:
+This formulation accounts for three main noise contributions:
 
 1. Structural noise;
 2. Quantum noise;
 3. Electronic noise.
 
-The spatial correlation of the detector noise is characterized using a normalized correlation kernel estimated from homogeneous calibration images.
+The quantum noise coefficient is allowed to vary spatially across the detector, providing a more realistic representation of detector nonuniformity.
 
 ---
 
-## Processing Workflow
+# 2. Noise Parameter Estimation
 
-The restoration demo is implemented as a MATLAB script that performs the following steps:
+The detector noise parameters are estimated from repeated homogeneous calibration images.
 
-1. Load the estimated detector noise parameters.
-2. Load the inverse VSTQ lookup table.
-3. Load the spatial noise correlation kernel.
-4. Read repeated phantom images.
-5. Subtract the detector offset.
-6. Apply the forward VSTQ transformation.
-7. Verify the effectiveness of the variance stabilization.
-8. Normalize the transformed images.
-9. Estimate the noise power spectrum associated with the spatial correlation kernel.
-10. Apply BM3D denoising in the VSTQ domain.
-11. Undo the normalization.
-12. Apply the inverse VSTQ transformation.
-13. Generate the restored mammography images.
+The estimation procedure includes:
 
-The main demonstration script is intended to provide a compact example of the complete restoration pipeline.
+1. Detector offset correction;
+2. Detrending of the calibration images;
+3. Local mean estimation;
+4. Local variance estimation;
+5. Estimation of the spatially varying quantum noise coefficient `ξq(i,j)`;
+6. Estimation of the structural noise parameter `ξₛ`;
+7. Estimation of the electronic noise parameter `ξₑ`.
+
+The estimated parameters are stored in the `NoiseParameters/Parameters/` directory and are subsequently used by the VSTQ transformation and image restoration procedures.
 
 ---
 
-## Repository Structure
+# 3. Spatial Noise Correlation
+
+In addition to the signal-dependent variance, the framework accounts for spatial correlation in the detector noise.
+
+The spatial correlation is characterized using homogeneous calibration images after removing the spatially varying signal component.
+
+A spatial correlation kernel is estimated and normalized before being used in the restoration framework.
+
+The corresponding noise power spectral density (PSD) can be obtained from the Fourier transform of the normalized correlation kernel.
+
+The estimated kernel is stored in:
+
+```text
+NoiseParameters/Kernel/
+```
+
+and is used to characterize the non-white noise present in the detector images.
+
+---
+
+# 4. VSTQ Transformation
+
+The variance-stabilizing transform for quadratic noise (VSTQ) is used to convert the signal-dependent noise into an approximately signal-independent representation.
+
+The transformation uses the estimated quadratic noise model parameters:
+
+* `ξₛ`;
+* `ξₑ`;
+* `ξq(i,j)`.
+
+The spatially varying `ξq(i,j)` map is therefore incorporated directly into the transformation.
+
+The VSTQ processing can be summarized as:
+
+```text
+Offset-corrected image
+        │
+        ▼
+Quadratic noise model
+        │
+        ▼
+Spatially varying ξq(i,j)
+        │
+        ▼
+Forward VSTQ
+        │
+        ▼
+Approximately signal-independent noise
+```
+
+The effectiveness of the transformation can be verified by comparing the noise standard deviation before and after the transformation over different signal levels.
+
+---
+
+# 5. Inverse VSTQ LUT Estimation
+
+The inverse VSTQ transformation is implemented using a precomputed lookup table (LUT).
+
+The LUT is generated numerically using Monte Carlo simulations of the quadratic noise model.
+
+The LUT estimation procedure consists of:
+
+1. Define a range of detector signal values;
+2. Define a range of quantum noise coefficients `ξq`;
+3. Generate realizations of the quadratic noise model;
+4. Apply the forward VSTQ transformation;
+5. Estimate the expected transformed signal;
+6. Store the corresponding signal-to-VSTQ relationship;
+7. Construct the inverse mapping;
+8. Generate the final inverse VSTQ LUT.
+
+The resulting LUT provides an efficient numerical approximation of the inverse transformation.
+
+This approach avoids performing a computationally expensive numerical inversion independently for every pixel during image restoration.
+
+The LUT files are stored in:
+
+```text
+NoiseParameters/LUT/
+```
+
+### LUT Generation
+
+The LUT estimation scripts are located in:
+
+```text
+LUT_Estimation/
+```
+
+The main parameters controlling the LUT generation include:
+
+* Signal range;
+* `ξq` range;
+* Number of Monte Carlo realizations;
+* LUT sampling density.
+
+The LUT resolution should be selected according to the desired trade-off between inversion accuracy, memory usage, and computational time.
+
+---
+
+# 6. Image Restoration
+
+The image restoration pipeline combines VSTQ, BM3D, spatial noise correlation information, and inverse VSTQ.
+
+The complete restoration procedure is:
+
+```text
+Input image
+    │
+    ▼
+Offset subtraction
+    │
+    ▼
+Forward VSTQ
+    │
+    ▼
+Normalization
+    │
+    ▼
+BM3D denoising
+    │
+    ▼
+Denormalization
+    │
+    ▼
+Inverse VSTQ LUT
+    │
+    ▼
+Restored image
+```
+
+The main demonstration script is:
+
+```text
+Restoration/Demo_VSTQ_BM3D_Restoration.m
+```
+
+The demo performs the complete restoration pipeline using phantom images and previously estimated detector parameters.
+
+---
+
+## BM3D Denoising
+
+BM3D is applied in the VSTQ domain, where the noise is approximately signal-independent.
+
+The transformed image is normalized before denoising, and the corresponding noise level is adjusted according to the normalization factor.
+
+The spatial correlation information is characterized through the estimated noise correlation kernel and its corresponding frequency-domain representation.
+
+After denoising, the image is returned to its original VSTQ scale before the inverse transformation.
+
+The BM3D implementation used in this work is included in:
+
+```text
+BM3D_New/
+```
+
+---
+
+# 7. Human Observer Study
+
+The restoration method was evaluated using a human observer study designed to assess whether the proposed image restoration improves the detectability of simulated microcalcifications in digital mammography images.
+
+The observer study consists of two stages:
+
+```text
+Pilot study
+     │
+     ▼
+Observer-specific threshold estimation
+     │
+     ▼
+Final 4AFC experiment
+     │
+     ▼
+Detection performance
+```
+
+## 7.1 Pilot Test
+
+The pilot experiment uses a staircase procedure to estimate an individual contrast threshold for each observer.
+
+The purpose of the pilot test is to determine an appropriate difficulty level for the subsequent detection experiment while accounting for differences in observer performance.
+
+The pilot-test code will be provided in:
+
+```text
+HumanObserver/Pilot/
+```
+
+**Status:** Coming soon.
+
+---
+
+## 7.2 Final Human Observer Test
+
+The final experiment uses a four-alternative forced-choice (4AFC) paradigm.
+
+Each observer evaluates images containing simulated microcalcification clusters under different image-processing conditions.
+
+The final experiment includes:
+
+* Individualized stimulus levels based on the pilot test;
+* Restored and non-restored images;
+* Multiple experimental cases;
+* Two reading sessions;
+* A minimum washout period between sessions;
+* Observer detection accuracy as the primary performance measure.
+
+The final-test code will be provided in:
+
+```text
+HumanObserver/FinalTest/
+```
+
+**Status:** Coming soon.
+
+---
+
+# 8. Repository Structure
 
 The repository is organized as follows:
 
@@ -104,58 +316,106 @@ The repository is organized as follows:
 .
 ├── BM3D_New/
 │   └── bm3d/
-│       └── ...
 │
 ├── Functions/
-│   ├── ...
+│   └── ...
+│
+├── LUT_Estimation/
 │   └── ...
 │
 ├── NoiseParameters/
 │   ├── Parameters/
-│   │   └── ...
 │   ├── LUT/
-│   │   └── ...
 │   └── Kernel/
-│       └── ...
 │
-├── Phantom images/
+├── Restoration/
+│   ├── Demo_VSTQ_BM3D_Restoration.m
 │   └── ...
 │
-├── Demo_Restoration.m
+├── HumanObserver/
+│   ├── Pilot/
+│   │   └── ...
+│   └── FinalTest/
+│       └── ...
+│
+├── Phantom_images/
+│   └── ...
 │
 └── README.md
 ```
 
-### `BM3D_New/`
+---
 
-Contains the BM3D implementation used for denoising in the VSTQ domain.
+# 9. Requirements
 
-### `Functions/`
+The code was developed and tested using MATLAB.
 
-Contains auxiliary MATLAB functions required by the restoration pipeline, including VSTQ validation and image-processing routines.
+Required components include:
 
-### `NoiseParameters/`
+* MATLAB;
+* Image Processing Toolbox;
+* DICOM image support.
 
-Contains the detector-specific parameters required by the restoration method.
+The BM3D implementation required by the restoration demo is included in the repository.
 
-These include:
-
-* Estimated quadratic noise-model parameters;
-* Spatially varying quantum noise coefficient `ξq(i,j)`;
-* Inverse VSTQ lookup table;
-* Spatial noise correlation kernel.
-
-### `Phantom images/`
-
-Contains the repeated homogeneous or phantom mammography images used in the demonstration.
+The MATLAB version used for the final implementation will be specified in the corresponding scripts and documentation.
 
 ---
 
-## Detector Parameters
+# 10. Usage
 
-The restoration framework requires previously estimated detector parameters.
+The repository is organized into independent but connected stages.
 
-For the GE Senographe Pristina system, the parameter files include:
+### Step 1 — Estimate noise parameters
+
+Use the scripts in:
+
+```text
+NoiseParameters/Parameters/
+```
+
+to estimate the detector-specific parameters from calibration images.
+
+### Step 2 — Estimate the spatial correlation
+
+Use the corresponding scripts to estimate the spatial correlation kernel and generate the detector noise PSD.
+
+### Step 3 — Generate the inverse VSTQ LUT
+
+Run the scripts in:
+
+```text
+LUT_Estimation/
+```
+
+to generate the inverse VSTQ lookup table.
+
+### Step 4 — Run image restoration
+
+Run:
+
+```text
+Restoration/Demo_VSTQ_BM3D_Restoration.m
+```
+
+to apply the complete restoration pipeline.
+
+### Step 5 — Run the human observer experiments
+
+The pilot and final human observer demonstrations will be added to:
+
+```text
+HumanObserver/Pilot/
+HumanObserver/FinalTest/
+```
+
+---
+
+# 11. Detector-Specific Parameters
+
+The provided restoration demonstration uses parameters estimated for a GE Senographe Pristina digital mammography system.
+
+The parameter files include:
 
 | Parameter | Description                                 |
 | --------- | ------------------------------------------- |
@@ -166,167 +426,47 @@ For the GE Senographe Pristina system, the parameter files include:
 | `Ke`      | Spatial noise correlation kernel            |
 | `IVSTQ`   | Inverse VSTQ lookup table                   |
 
-These parameters should be estimated from calibration data acquired using the same detector system before applying the restoration framework to clinical or phantom images.
+These parameters are detector-specific and should not be directly transferred to another mammography system.
+
+For application to another detector, the corresponding calibration data should be acquired and the noise parameters, correlation kernel, and inverse VSTQ LUT should be re-estimated.
 
 ---
 
-## VSTQ Transformation
+# 12. Data and Reproducibility
 
-The forward VSTQ transformation is applied after detector-offset subtraction.
+The repository is intended to provide reproducible implementations of the methods described in the associated research work.
 
-The transformation incorporates the estimated parameters of the quadratic noise model and the spatially varying quantum noise coefficient `ξq(i,j)`.
+The restoration pipeline depends on detector-specific calibration parameters. Therefore, reproducibility requires the use of the corresponding noise parameters, spatial correlation kernel, and inverse VSTQ LUT provided with the repository.
 
-The purpose of the transformation is to convert the signal-dependent noise into an approximately signal-independent representation.
+The human observer experiments additionally require the corresponding image databases and experimental configurations.
 
-This allows the denoising stage to operate in a domain in which the noise statistics are substantially more homogeneous across different signal levels.
-
-The effectiveness of the transformation can be evaluated by comparing the standard deviation of the noise before and after the VSTQ transformation as a function of the local image signal.
+Data that cannot be publicly redistributed will not be included in the repository. In such cases, the repository will provide the scripts and instructions required to reproduce the corresponding processing steps using appropriately prepared data.
 
 ---
 
-## Spatially Correlated Noise
+# 13. Applications
 
-Unlike approaches that assume spatially independent noise, this implementation explicitly considers spatial correlation in the detector noise.
-
-The normalized spatial correlation kernel is incorporated into the characterization of the noise spectrum.
-
-For an image of size `M × N`, the corresponding noise power spectral density can be obtained from the Fourier transform of the normalized correlation kernel.
-
-This information is used in the denoising framework to account for the non-white characteristics of the detector noise.
-
----
-
-## BM3D Denoising
-
-BM3D is applied to the images after the forward VSTQ transformation.
-
-Before denoising, the transformed image is normalized according to its minimum and maximum values. The corresponding noise level is adjusted consistently with this normalization.
-
-The processing can be summarized as:
-
-```text
-VSTQ image
-    │
-    ▼
-Normalization
-    │
-    ▼
-Noise statistics / PSD
-    │
-    ▼
-BM3D
-    │
-    ▼
-Denormalization
-```
-
-The denoised image remains in the VSTQ domain until the inverse transformation is applied.
-
----
-
-## Inverse VSTQ
-
-After BM3D denoising, the inverse VSTQ transformation is applied using the precomputed inverse lookup table.
-
-The spatially varying `ξq(i,j)` map is provided to the inverse transformation so that the local noise characteristics of the detector are preserved during reconstruction.
-
-The output is an estimate of the restored image in the original detector-signal domain.
-
----
-
-## Requirements
-
-The code was developed and tested using MATLAB.
-
-The following MATLAB components may be required depending on the functions included in the repository:
-
-* MATLAB;
-* Image Processing Toolbox.
-
-The BM3D implementation is included in the repository.
-
-The reference MATLAB version used during development should be specified here once the final repository version is defined.
-
----
-
-## Usage
-
-### 1. Clone the repository
-
-Clone or download the repository to your local machine.
-
-### 2. Prepare the data
-
-Place the phantom or mammography images in:
-
-```text
-Phantom images/
-```
-
-The images should be compatible with MATLAB's `dicomread` function.
-
-### 3. Check the detector parameters
-
-Ensure that the corresponding files in:
-
-```text
-NoiseParameters/
-```
-
-are available and correspond to the detector system used for the images.
-
-### 4. Run the demonstration
-
-Open the main restoration script:
-
-```text
-Demo_Restoration.m
-```
-
-and run it in MATLAB.
-
-The script will:
-
-* Load the detector parameters;
-* Read the input images;
-* Apply the forward VSTQ;
-* Perform BM3D denoising;
-* Apply the inverse VSTQ;
-* Generate the restored images.
-
----
-
-## Data and Reproducibility
-
-The restoration method requires detector-specific calibration parameters.
-
-Therefore, the provided parameter files should be considered part of the experimental configuration of the demonstration and should not be assumed to be directly transferable to other mammography systems.
-
-For application to another detector, the corresponding noise parameters, spatial correlation kernel, and inverse VSTQ lookup table should be estimated using calibration data acquired from that system.
-
----
-
-## Applications
-
-The framework can be used for research involving:
+The methods implemented in this repository can be used for research involving:
 
 * Digital mammography image restoration;
 * Low-dose mammography;
-* Noise reduction;
-* Variance-stabilizing transformations;
-* Signal-dependent noise;
+* Signal-dependent noise modeling;
 * Spatially correlated detector noise;
+* Variance-stabilizing transformations;
+* Noise parameter estimation;
+* Image denoising;
 * Image quality assessment;
 * Mammography image simulation;
-* Evaluation of lesion detectability.
+* Microcalcification detectability;
+* Human observer studies.
 
-The framework is intended primarily for research and image-processing studies.
+The code is intended for research purposes and is not designed for clinical diagnosis or direct clinical deployment.
 
 ---
 
-## Citation
+# 14. Citation
 
-If you use this repository or the implemented restoration framework in your research, please cite the corresponding publication:
+If you use this repository or the implemented methods in your research, please cite the associated publication:
 
 ```text
 [Publication information will be added after publication.]
@@ -334,13 +474,19 @@ If you use this repository or the implemented restoration framework in your rese
 
 ---
 
-## Contact
+# 15. Contact
 
 Renann F. Brandão
 Laboratory for Advanced Vision and Imaging (LAVI)
 University of São Paulo (USP)
 São Carlos, SP, Brazil
 
-For questions regarding the implementation or the methodology, please open an issue in this repository or contact the authors.
+For questions, suggestions, or issues related to the implementation, please open an issue in this repository.
 
 ---
+
+## Acknowledgments
+
+This work was developed at the Laboratory for Advanced Vision and Imaging (LAVI), University of São Paulo (USP).
+
+The authors acknowledge the institutions and research programs that supported the development of this work.
